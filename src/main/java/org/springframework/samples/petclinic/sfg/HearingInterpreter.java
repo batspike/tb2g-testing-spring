@@ -1,8 +1,5 @@
 package org.springframework.samples.petclinic.sfg;
 
-import org.springframework.stereotype.Service;
-
-@Service
 public class HearingInterpreter {
 	private final WordProducer wordProducer;
 

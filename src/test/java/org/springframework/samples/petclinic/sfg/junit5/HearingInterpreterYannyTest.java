@@ -7,8 +7,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.samples.petclinic.sfg.BaseConfig;
 import org.springframework.samples.petclinic.sfg.HearingInterpreter;
 import org.springframework.samples.petclinic.sfg.YannyConfig;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit.jupiter.SpringJUnitConfig;
 
+@ActiveProfiles("yanny")
 @SpringJUnitConfig(classes= {BaseConfig.class, YannyConfig.class})
 class HearingInterpreterYannyTest {
 
