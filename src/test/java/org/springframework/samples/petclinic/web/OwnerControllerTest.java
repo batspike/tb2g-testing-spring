@@ -44,11 +44,18 @@ class OwnerControllerTest {
 	}
 	
 	@Test
+	void processFindFormTest() throws Exception {
+		mockMvc.perform(get("/owners").param("firstName", "Sam").param("lastName", "Lau")) //param will bind attribute to owner object
+				.andExpect(status().isOk())
+				.andExpect(view().name("owners/findOwners"));
+	}
+	
+	@Test
 	void initCreationFormTest() throws Exception {
 		mockMvc.perform(get("/owners/new"))
-				.andExpect(status().isOk())
-				.andExpect(model().attributeExists("owner"))
-				.andExpect(view().name("owners/createOrUpdateOwnerForm"));
+		.andExpect(status().isOk())
+		.andExpect(model().attributeExists("owner"))
+		.andExpect(view().name("owners/createOrUpdateOwnerForm"));
 	}
 	
 	@Test
