@@ -62,19 +62,39 @@ class OwnerControllerTest {
 	}
 	
 	@Test
-	void processCreationFormTest() throws Exception {
+	void processCreationFormInValidTest() throws Exception {
 		//Given
 		
 		//When-Then
 		mockMvc.perform(post("/owners/new")
-							.param("firstName", "Carlos")
+							.param("firstname", "Carlos") //field-name is not case-sensitive
 							.param("lastName", "Santan")
-							.param("Address", "11 Maria St")
-							.param("city", "Miami")
-							.param("telephone", "123456789"))
+							.param("city", "Miami"))
 				//.andDo(print()) // for more detail information 
-				.andExpect(status().is3xxRedirection())
-				.andReturn().toString().startsWith("redirect:/owners");
+				.andExpect(status().isOk())
+				.andExpect(model().attributeHasErrors("owner"))
+				.andExpect(model().attributeHasFieldErrors("owner", "address"))
+				.andExpect(model().attributeHasFieldErrors("owner", "telephone"))
+				.andExpect(view().name("owners/createOrUpdateOwnerForm"));
+		
+		then(clinicService).should(times(0)).saveOwner(any());
+	}
+	
+	@Test
+	void processCreationFormValidTest() throws Exception {
+		//Given
+		
+		//When-Then
+		mockMvc.perform(post("/owners/new")
+				.param("firstName", "Carlos")
+				.param("lastName", "Santan")
+				.param("address", "11 Maria St")
+				.param("city", "Miami")
+				.param("telephone", "123456789"))
+		//.andDo(print()) // for more detail information 
+		.andExpect(status().is3xxRedirection())
+		.andExpect(model().attributeHasNoErrors("owner"))
+		.andReturn().toString().startsWith("redirect:/owners");
 		
 		then(clinicService).should().saveOwner(any());
 	}
