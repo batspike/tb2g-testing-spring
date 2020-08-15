@@ -3,7 +3,7 @@ package org.springframework.samples.petclinic.web;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.BDDMockito.then;
+import static org.mockito.BDDMockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.model;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -11,18 +11,23 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import java.util.Map;
 
+import org.assertj.core.util.Lists;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.samples.petclinic.model.Owner;
 import org.springframework.samples.petclinic.service.ClinicService;
 import org.springframework.test.context.junit.jupiter.web.SpringJUnitWebConfig;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
-@ExtendWith(MockitoExtension.class)
+@ExtendWith(MockitoExtension.class) //needed for @Mock and @Captor
 @SpringJUnitWebConfig(locations= {"classpath:spring/mvc-test-config.xml","classpath:spring/mvc-core-config.xml"})
 class OwnerControllerTest {
 	
@@ -37,17 +42,56 @@ class OwnerControllerTest {
 	
 	MockMvc mockMvc;
 	
+	@Captor
+	ArgumentCaptor<String> stringArgumentCaptor;
+	
 	@BeforeEach
 	void setUp() throws Exception {
 		//setup mockMvc for OwnerController
 		mockMvc = MockMvcBuilders.standaloneSetup(controller).build();
 	}
 	
+	@AfterEach
+	void tearDown() {
+		//we need to reset clinicService as this is a autowired object from Spring context.
+		//which means every call with clinicService is accumulated across all the test cases.
+		reset(clinicService);
+	}
+	
 	@Test
-	void processFindFormTest() throws Exception {
-		mockMvc.perform(get("/owners").param("firstName", "Sam").param("lastName", "Lau")) //param will bind attribute to owner object
+	void processFindFormFoundManyTest() throws Exception {
+		//Given
+		given(clinicService.findOwnerByLastName(anyString())).willReturn(Lists.newArrayList(new Owner(), new Owner()));
+		
+		//When-Then
+		mockMvc.perform(get("/owners")) //no param mean owner.lastName is null
 				.andExpect(status().isOk())
-				.andExpect(view().name("owners/findOwners"));
+				.andExpect(view().name("owners/ownersList"));
+		
+		then(clinicService).should().findOwnerByLastName(stringArgumentCaptor.capture());
+		assertThat(stringArgumentCaptor.getValue()).isEqualToIgnoringCase(""); //test for parameterless GET
+	}
+	
+	@Test
+	void processFindFormFoundOneTest() throws Exception {
+		//Given
+		Owner owner = new Owner();
+		owner.setId(1);
+		given(clinicService.findOwnerByLastName(anyString())).willReturn(Lists.newArrayList(owner));
+		
+		//When-Then
+		mockMvc.perform(get("/owners").param("lastName", "AnyName"))
+		.andExpect(status().is3xxRedirection())
+		.andExpect(view().name("redirect:/owners/" + owner.getId()));
+		
+		then(clinicService).should().findOwnerByLastName("AnyName");
+	}
+	
+	@Test
+	void processFindFormNotFoundTest() throws Exception {
+		mockMvc.perform(get("/owners").param("lastName", "Lau")) //param will bind attribute to owner object
+		.andExpect(status().isOk())
+		.andExpect(view().name("owners/findOwners"));
 	}
 	
 	@Test
