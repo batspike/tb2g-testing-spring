@@ -14,7 +14,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import java.util.Map;
 
 import org.assertj.core.util.Lists;
-import org.hamcrest.Matcher;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -62,11 +61,11 @@ class OwnerControllerTest {
 	}
 	
 	@Test
-	void processCreationFormInValidTest() throws Exception {
+	void processUpdateOwnerFormInValidTest() throws Exception {
 		//Given
 		
 		//When-Then
-		mockMvc.perform(post("/owners/new")
+		mockMvc.perform(post("/owners/{ownerId}/edit",22)
 							.param("firstname", "Carlos") //field-name is not case-sensitive
 							.param("lastName", "Santan")
 							.param("city", "Miami"))
@@ -76,6 +75,44 @@ class OwnerControllerTest {
 				.andExpect(model().attributeHasFieldErrors("owner", "address"))
 				.andExpect(model().attributeHasFieldErrors("owner", "telephone"))
 				.andExpect(view().name("owners/createOrUpdateOwnerForm"));
+		
+		then(clinicService).should(times(0)).saveOwner(any());
+	}
+	
+	@Test
+	void processUpdateOwnerFormValidTest() throws Exception {
+		//Given
+		
+		//When-Then
+		mockMvc.perform(post("/owners/{ownerId}/edit",22)
+				.param("firstName", "Carlos")
+				.param("lastName", "Santan")
+				.param("address", "11 Maria St")
+				.param("city", "Miami")
+				.param("telephone", "123456789"))
+		//.andDo(print()) // for more detail information 
+		.andExpect(status().is3xxRedirection())
+		.andExpect(model().attributeHasNoErrors("owner"))
+		.andExpect(view().name("redirect:/owners/{ownerId}"));
+		
+		then(clinicService).should().saveOwner(any());
+	}
+	
+	@Test
+	void processCreationFormInValidTest() throws Exception {
+		//Given
+		
+		//When-Then
+		mockMvc.perform(post("/owners/new")
+				.param("firstname", "Carlos") //field-name is not case-sensitive
+				.param("lastName", "Santan")
+				.param("city", "Miami"))
+		//.andDo(print()) // for more detail information 
+		.andExpect(status().isOk())
+		.andExpect(model().attributeHasErrors("owner"))
+		.andExpect(model().attributeHasFieldErrors("owner", "address"))
+		.andExpect(model().attributeHasFieldErrors("owner", "telephone"))
+		.andExpect(view().name("owners/createOrUpdateOwnerForm"));
 		
 		then(clinicService).should(times(0)).saveOwner(any());
 	}
