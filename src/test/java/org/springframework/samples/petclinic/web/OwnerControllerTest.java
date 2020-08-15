@@ -5,6 +5,8 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.BDDMockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.model;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.view;
@@ -12,6 +14,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import java.util.Map;
 
 import org.assertj.core.util.Lists;
+import org.hamcrest.Matcher;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -56,6 +59,24 @@ class OwnerControllerTest {
 		//we need to reset clinicService as this is a autowired object from Spring context.
 		//which means every call with clinicService is accumulated across all the test cases.
 		reset(clinicService);
+	}
+	
+	@Test
+	void processCreationFormTest() throws Exception {
+		//Given
+		
+		//When-Then
+		mockMvc.perform(post("/owners/new")
+							.param("firstName", "Carlos")
+							.param("lastName", "Santan")
+							.param("Address", "11 Maria St")
+							.param("city", "Miami")
+							.param("telephone", "123456789"))
+				//.andDo(print()) // for more detail information 
+				.andExpect(status().is3xxRedirection())
+				.andReturn().toString().startsWith("redirect:/owners");
+		
+		then(clinicService).should().saveOwner(any());
 	}
 	
 	@Test
